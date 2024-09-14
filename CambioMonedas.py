@@ -4,7 +4,10 @@ import pandas as pd
 from tkinter import *
 from tkinter.ttk import Notebook
 from tkinter import messagebox
-
+#importar libreria para manejo de fechas y tiempo
+from datetime import *
+#importar libreria para crear gráficas
+from matplotlib import pyplot as plt
 #importar libreria util
 import Util
 
@@ -24,20 +27,59 @@ def obtenerMonedas():
 
 def graficar():
     #global df, monedas
-    if cmbMoneda.current() >=0:
+    if cmbMoneda.current() >= 0:
+        nb.select(0)
         df.sort_values(by="Fecha", ascending=False).head()
         cambios = df[df["Moneda"]==monedas[cmbMoneda.current()]]
         y = cambios["Cambio"]
 
         fechas=cambios["Fecha"]
-
-        print(fechas)
+        x = [datetime.strptime(f, "%d/%m/%Y").date() for f in fechas]
         
+        #crear grafica
+        plt.clf()
+        plt.title("Cambios de la moneda "+monedas[cmbMoneda.current()])
+        plt.ylabel("Cambios")
+        plt.xlabel("Fechas")
+        plt.plot(x, y)
+        nombreArchivo = "Grafica Cambios Moneda.png"
+        plt.savefig(nombreArchivo)
+
+        #mostrar la grafica
+        Util.agregarImagen(paneles[0], nombreArchivo, 0, 0)
     else:
         messagebox.showerror("Error graficando", "No ha seleccionado la moneda")
 
 def estadisticas():
-    pass
+    if cmbMoneda.current() >= 0:
+        nb.select(1)
+        cambios = df[df["Moneda"]==monedas[cmbMoneda.current()]]
+
+        #mostrar el promedio
+        Util.agregarEtiqueta(paneles[1], "Promedio:", 0, 0)
+        #Util.agregarEtiqueta(paneles[1], "{0:,.2f}".format(cambios["Cambio"].mean()), 0, 1)
+        Util.agregarEtiqueta(paneles[1], f"{cambios['Cambio'].mean():.2f}", 0, 1)
+
+        #mostrar la desviación estandar
+        Util.agregarEtiqueta(paneles[1], "Desviación:", 1, 0)
+        Util.agregarEtiqueta(paneles[1], "{0:,.2f}".format(cambios["Cambio"].std()), 1, 1)
+
+        #mostrar el maximo
+        Util.agregarEtiqueta(paneles[1], "Máximo:", 2, 0)
+        Util.agregarEtiqueta(paneles[1], "{0:,.2f}".format(cambios["Cambio"].max()), 2, 1)
+
+        #mostrar el mínimo
+        Util.agregarEtiqueta(paneles[1], "Mínimo:", 3, 0)
+        Util.agregarEtiqueta(paneles[1], "{0:,.2f}".format(cambios["Cambio"].min()), 3, 1)
+
+        #mostrar la moda
+        Util.agregarEtiqueta(paneles[1], "Moda:", 4, 0)
+        f = 4
+        for moda in cambios["Cambio"].mode():
+            Util.agregarEtiqueta(paneles[1], "{0:,.2f}".format(moda), f, 1)
+            f+=1
+    else:
+        messagebox.showerror("Error en estadísticas", "No ha seleccionado la moneda")
 
 #crear una ventana
 v = Util.crearVentana("Cambios de Monedas", "400x300")
